@@ -29,24 +29,6 @@ logging.basicConfig(level=logging.DEBUG)
 # add ch to logger
 # logger.addHandler(ch)
 
-# read the tracefile
-tracefile = open("starwars.frames.old", "r+")
-traces = tracefile.read().splitlines()[0:10000]
-traces = np.array(list(map(int, traces)))
-tracefile.close()
-
-
-def frametype(frm_num):
-    # 1 for I, 2 for B, and P for 3
-    ret = frm_num % 12
-    if ret == 1:
-        return 1
-    elif 1 < ret < 4 and 4 < ret < 7 and 7 < ret < 10 and 10 < ret <= 12:
-        return 2
-    else:
-        return 3
-
-
 class event:
     def __init__(self,  evt_time, snd_time, evt_type, pkt_no=None, pkt_imp=None, pkt_delay_req=None, frm_id=None):
         # evt_type 0 for pkt arrival, 1 for timeout, 2 for delivered, 3 for ACK
@@ -70,6 +52,23 @@ class event:
     def set_sndtime(self, snd_time):
         self.snd_time = snd_time
 
+# class errctl_evetsim:
+#     def __init__(self):
+#     # read the tracefile
+#         tracefile = open("starwars.frames.old", "r+")
+#         traces = tracefile.read().splitlines()[0:10000]
+#         traces = np.array(list(map(int, traces)))
+#         tracefile.close()
+
+
+
+
+
+
+tracefile = open("starwars.frames.old", "r+")
+traces = tracefile.read().splitlines()[0:10000]
+traces = np.array(list(map(int, traces)))
+tracefile.close()
 
 pkt_size = 1000  # 1000 bytes per packet
 pkts_per_frm = np.array([int(item/(pkt_size)) for item in traces])
@@ -112,6 +111,19 @@ t = 0
 ind = 0
 event_list = queue.PriorityQueue()
 event_list.put_nowait(arrival_events[ind])
+
+
+def frametype(frm_num):
+    # 1 for I, 2 for B, and P for 3
+    ret = frm_num % 12
+    if ret == 1:
+        return 1
+    elif 1 < ret < 4 and 4 < ret < 7 and 7 < ret < 10 and 10 < ret <= 12:
+        return 2
+    else:
+        return 3
+    
+    
 
 while True:
     # logger.debug(str(event_list.queue))

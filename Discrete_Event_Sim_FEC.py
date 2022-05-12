@@ -55,6 +55,8 @@ class event:
         self.snd_time = snd_time
 
 
+
+
 # np.random.seed(seed=0)
 # read the tracefile
 tracefile = open("starwars.frames.old", "r+")
@@ -120,6 +122,52 @@ def frametype(frm_num):
         return 2
     else:
         return 3
+    
+
+def snd_pkts():
+    while S_next < S_base + snd_wnd - redun_pkt_no:
+        if S_next >= max_pkt_no:
+            break
+        one_trip = np.random.uniform(one_trip_min, one_trip_max)
+
+        # determine pkt importance:
+        frm_id = np.where(accumu_packets >= S_next+1)[0][0]
+        pkt_imp = frametype(frm_id+1)
+
+        # determine whether the packet is lost or not
+        lost = np.random.binomial(1, drp_rate)
+        drp_rate = 0.25 * drp_rate + np.random.uniform(0, 0.05) * 0.75
+
+        if lost:
+            lost_pkt_no += 1
+            lost_pkt.put_nowait(
+                event(t, t, 2, S_next, pkt_imp, t + delay_req, frm_id))
+        else:
+            # determine the arrival time
+            event_list.put_nowait(
+                event(t + one_trip, t, 2, S_next, pkt_imp, t + delay_req, frm_id))
+        #
+        S_next += 1
+
+    if S_next % (snd_wnd - redun_pkt_no) == 0 and S_next > 0:
+        redun_pkt_lost_no = np.random.binomial(redun_pkt_no, drp_rate)
+        if lost_pkt_no + redun_pkt_lost_no <= redun_pkt_no:
+            for i in range(lost_pkt_no):
+                pkt_evnt = lost_pkt.get_nowait()
+                one_trip = np.random.uniform(
+                    one_trip_min, one_trip_max)
+                pkt_evnt.set_time(t+one_trip)
+                event_list.put_nowait(pkt_evnt)
+        else:
+            # generate timeout events
+            for i in range(lost_pkt_no):
+                pkt_evnt = lost_pkt.get_nowait()
+                pkt_evnt.set_type(1)
+                pkt_evnt.set_time(t+rto)
+                event_list.put_nowait(pkt_evnt)
+        lost_pkt_no = 0
+        lost_pkt = queue.Queue()
+    
 
 
 while True:
