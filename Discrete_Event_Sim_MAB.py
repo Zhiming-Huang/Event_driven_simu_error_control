@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Fri Apr  1 15:25:37 2022
+Created on Wed May 18 16:17:40 2022
 
-@author: zhiming
+@author: Zhiming
 """
 
 import queue
@@ -31,7 +31,7 @@ logging.basicConfig(level=logging.DEBUG)
 # logger.addHandler(ch)
 
 
-class Fec_Sim(Errctl_Sim):
+class MAB_Sim(Errctl_Sim):
 
     def __init__(self, tracefile="starwars.frames.old"):
 

@@ -29,7 +29,9 @@ class MAB_Control():
         # c9 for where snd_wnd =1, so no fec, 0 for retransmission, 1 for drop
         self.c9_count = [1/2, 1/2, 0, 0]
         self.action = 0
-        self.count = []
+        self.count = {1: self.c1_count, 2: self.c2_count, 3: self.c3_count,
+                      4: self.c4_count, 5: self.c5_count, 6: self.c6_count,
+                      7: self.c7_count, 8: self.c8_count, 9: self.c9_count}
         self.type = 1
         self.packetno = {1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1}
 
@@ -56,41 +58,32 @@ class MAB_Control():
         # type 8: delay > 1.5 rtt, seg_buffer > 0, packet_importance = 1
         if self.delayReq <= 1.5*self.rtt:
             if self.packet_imp != 1 and self.seg_buffer == 0:
-                self.count = self.c1_count
                 self.type = 1
             if self.packet_imp == 1 and self.seg_buffer == 0:
-                self.count = self.c2_count
                 self.type = 2
             if self.packet_imp != 1 and self.seg_buffer > 0:
-                self.count = self.c5_count
                 self.type = 5
             if self.packet_imp == 1 and self.seg_buffer > 0:
-                self.count = self.c6_count
                 self.type = 6
         if self.delayReq > 1.5*self.rtt:
             if self.packet_imp != 1 and self.seg_buffer <= 0:
-                self.count = self.c3_count
                 self.type = 3
             if self.packet_imp == 1 and self.seg_buffer <= 0:
-                self.count = self.c4_count
                 self.type = 4
             if self.packet_imp != 1 and self.seg_buffer > 0:
-                self.count = self.c7_count
                 self.type = 7
             if self.snd_wnd <= 1:
-                self.count = self.c9_count
                 self.type = 9
             if self.packet_imp == 1 and self.seg_buffer > 0:
-                self.count = self.c8_count
                 self.type = 8
 
     def exp3_action(self):
         self._detcontype()
-        num_action = len(self.count)/2
+        num_action = len(self.count[self.type])/2
         rndnum = random.uniform(0, 1)
         cumsum = 0
         for i in range(int(num_action)):
-            cumsum = cumsum + self.count[i]
+            cumsum = cumsum + self.count[self.type][i]
             if rndnum <= cumsum:
                 self.action = i
                 break
@@ -100,19 +93,20 @@ class MAB_Control():
         # 0 for retransmission, 1 for FEC, and 2 for drop
         # for type 9, 0 for retransmission, 2 for drop
 
-    def exp3_udate(self, reward):
-        num_action = len(self.count)/2
+    def exp3_udate(self, context_id, action_id, reward):
+        num_action = len(self.count[context_id])/2
         loss_sum = 0
         eta = math.sqrt(math.log(num_action) /
-                        (num_action*self.packetno[self.type]))
+                        (num_action*self.packetno[context_id]))
         for i in range(int(num_action)):
-            if i == self.action:
-                self.count[int(num_action) + i] += (1-reward) / \
-                    (self.count[self.action]+eta/2)
+            if i == action_id:
+                self.count[context_id][int(num_action) + i] += (1-reward) / \
+                    (self.count[context_id][self.action]+eta/2)
             else:
-                self.count[int(num_action) + i] += 0
-            self.count[i] = math.exp(-eta*self.count[int(num_action)+i])
-            loss_sum += self.count[i]
+                self.count[context_id][int(num_action) + i] += 0
+            self.count[context_id][i] = math.exp(-eta *
+                                                 self.count[context_id][int(num_action)+i])
+            loss_sum += self.count[context_id][i]
         for i in range(int(num_action)):
-            self.count[i] = self.count[i]/loss_sum
-        self.packetno[self.type] += 1
+            self.count[context_id][i] = self.count[context_id][i]/loss_sum
+        self.packetno[context_id] += 1
