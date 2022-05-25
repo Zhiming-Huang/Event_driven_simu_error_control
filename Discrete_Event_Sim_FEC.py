@@ -99,6 +99,7 @@ class Fec_Sim(Errctl_Sim):
             self.lost_pkt = queue.Queue()
 
     def __event_lost(self, evnt):
+        self.t = evnt.time
         # if packet lost and timeout, move snd window
         pkt_no = evnt.pkt_no
         if pkt_no >= self.S_base:

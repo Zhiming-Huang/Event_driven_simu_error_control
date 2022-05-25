@@ -138,8 +138,37 @@ class MAB_Sim(Errctl_Sim):
             self.lost_pkt = queue.Queue()
 
     def __event_lost(self, evnt):
+        self.t = evnt.time
         # if packet lost and timeout, move snd window
         pkt_no = evnt.pkt_no
+        context_action_pair = self.pktcontext[pkt_no]
+
+        action_id = context_action_pair[1]
+
+        # if the action is ARQ, then we retransmit the packet
+        if action_id == 0:
+            lost = np.random.binomial(1, self.drp_rate)
+            one_trip = np.random.uniform(
+                self.one_trip_min, self.one_trip_max)
+            self.drp_rate = 0.25 * self.drp_rate + \
+                np.random.uniform(0, 0.05) * 0.75
+            if lost:
+                # if packet is lost, an timeout event is generated
+                evnt.set_time(self.t + 2*self.rto)
+                evnt.set_sndtime(self.t)
+                # set the event type to timeout event
+                evnt.set_type(1)
+                # add event to the event list
+                self.event_list.put_nowait(evnt)
+
+            else:
+                # determine the arrival time
+                evnt.set_time(self.t + one_trip)
+                evnt.set_sndtime(self.t)
+                # set the event type to the arrival event
+                evnt.set_type(2)
+                # add event to the event list
+                self.event_list.put_nowait(evnt)
 
         if pkt_no >= self.S_base:
             self.S_base = pkt_no
