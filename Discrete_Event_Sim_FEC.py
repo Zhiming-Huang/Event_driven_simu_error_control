@@ -35,7 +35,7 @@ class Fec_Sim(Errctl_Sim):
 
     def __init__(self, tracefile="starwars.frames.old"):
 
-        super(Fec_Sim, self).__init__(tracefile)
+        super().__init__(tracefile)
 
         # set the number of redundant pkts for each batch of packet
         self.redun_pkt_no = 1

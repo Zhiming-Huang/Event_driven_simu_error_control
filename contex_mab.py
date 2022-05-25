@@ -91,7 +91,6 @@ class MAB_Control():
             return 2
         return self.action
         # 0 for retransmission, 1 for FEC, and 2 for drop
-        # for type 9, 0 for retransmission, 2 for drop
 
     def exp3_udate(self, context_id, action_id, reward):
         num_action = len(self.count[context_id])/2
