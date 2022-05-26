@@ -177,6 +177,7 @@ class MAB_Sim(Errctl_Sim):
         # if the action is FEC, we just ignore the lost pkts and move sndwnd
         else:
             pkt_imp = evnt.pkt_imp
+            self.lost_pkts.append(pkt_no)
 
             context_id = context_action_pair[0]
             # update MAB

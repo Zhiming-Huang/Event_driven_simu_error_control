@@ -69,7 +69,7 @@ class Errctl_Sim:
         self.ACKed_pkts = queue.PriorityQueue()
         self.expired_pkts = []
         self.lost_pkts = []
-        self.dropped_pkts = []
+        self.finalRcv_t = 0
         self.max_pkt_no = 0
 
         self.drp_rate = 0.01
@@ -174,6 +174,7 @@ class Errctl_Sim:
     def __event_delivered(self, evnt):
         # if packet is successfully received
         self.t = evnt.time
+        self.finalRcv_t = evnt.time
         one_trip = np.random.uniform(
             self.one_trip_min, self.one_trip_max)
         # send ACK, set the event to ack event
