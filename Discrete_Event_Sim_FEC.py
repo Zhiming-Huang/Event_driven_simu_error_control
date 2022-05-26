@@ -124,6 +124,23 @@ class Fec_Sim(Errctl_Sim):
         # Send packets
         self.__snd_pkts()
 
+    def __event_pktarrival(self, evnt):
+        # if packts arrive
+        self.t = evnt.time
+        # Get the current maximum packet number
+        self.max_pkt_no = self.accumu_packets[evnt.frm_id]
+        # Schedule next arrival event
+        self.ind += 1
+        if self.ind < self.num_frms:
+            try:
+                self.event_list.put_nowait(
+                    self.arrival_events[self.ind])
+            except queue.Full:
+                print("Queue is full")
+
+        # Send packets
+        self.__snd_pkts()
+
     def sim_run(self):
         while True:
             # logger.debug(str(event_list.queue))
@@ -143,7 +160,7 @@ class Fec_Sim(Errctl_Sim):
                     break
             else:
                 if evnt.type == 0:
-                    self._Errctl_Sim__event_pktarrival(evnt)
+                    self.__event_pktarrival(evnt)
 
                 elif evnt.type == 1:
                     self.__event_lost(evnt)

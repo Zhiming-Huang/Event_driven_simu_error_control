@@ -50,7 +50,7 @@ class MAB_Sim(Errctl_Sim):
             # check if the buffer still has pkts
             seg_buffer = self.max_pkt_no - self.S_next
 
-            if seg_buffer:
+            if not seg_buffer:
                 break
 
             one_trip = np.random.uniform(self.one_trip_min, self.one_trip_max)
@@ -61,7 +61,7 @@ class MAB_Sim(Errctl_Sim):
 
             # input the context
             context_id = self.MABctler.input_context(
-                self.delayReq, pkt_imp, seg_buffer, self.snd_wnd)
+                self.delay_req, pkt_imp, seg_buffer, self.snd_wnd)
 
             # get actions: 0 for ARQ, 1 for FEC, and 2 for drop
             action_id = self.MABctler.exp3_action()
@@ -218,6 +218,23 @@ class MAB_Sim(Errctl_Sim):
         # Send packets
         self.__snd_pkts()
 
+    def __event_pktarrival(self, evnt):
+        # if packts arrive
+        self.t = evnt.time
+        # Get the current maximum packet number
+        self.max_pkt_no = self.accumu_packets[evnt.frm_id]
+        # Schedule next arrival event
+        self.ind += 1
+        if self.ind < self.num_frms:
+            try:
+                self.event_list.put_nowait(
+                    self.arrival_events[self.ind])
+            except queue.Full:
+                print("Queue is full")
+
+        # Send packets
+        self.__snd_pkts()
+
     def sim_run(self):
         while True:
             # logger.debug(str(event_list.queue))
@@ -237,7 +254,7 @@ class MAB_Sim(Errctl_Sim):
                     break
             else:
                 if evnt.type == 0:
-                    self._Errctl_Sim__event_pktarrival(evnt)
+                    self.__event_pktarrival(evnt)
 
                 elif evnt.type == 1:
                     self.__event_lost(evnt)
