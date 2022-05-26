@@ -9,7 +9,7 @@ Created on Fri Apr  1 15:25:37 2022
 import queue
 import numpy as np
 import logging
-from errctl_sim import Errctl_Sim
+from ErrorControl_EventSim.errctl_sim import Errctl_Sim
 
 #from SplayTree import *
 

@@ -110,3 +110,7 @@ class MAB_Control():
         for i in range(int(num_action)):
             self.count[context_id][i] = self.count[context_id][i]/loss_sum
         self.packetno[context_id] += 1
+
+
+if __name__ == "__main__":
+    MAB_test = MAB_Control()

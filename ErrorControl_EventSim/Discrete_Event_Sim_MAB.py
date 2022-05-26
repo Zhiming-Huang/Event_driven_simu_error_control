@@ -10,7 +10,7 @@ import queue
 import numpy as np
 import logging
 import contex_mab
-from errctl_sim import Errctl_Sim, event
+from ErrorControl_EventSim.errctl_sim import Errctl_Sim, event
 
 logging.basicConfig(level=logging.DEBUG)
 

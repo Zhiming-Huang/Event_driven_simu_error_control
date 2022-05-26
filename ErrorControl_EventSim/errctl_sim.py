@@ -63,10 +63,13 @@ class Errctl_Sim:
         self.snd_wnd = 5
         self.S_base = 0
         self.S_next = 0
+
         self.R_packets = np.zeros(self.num_frms)
         self.R_packets2 = np.zeros(self.accumu_packets[-1])
         self.ACKed_pkts = queue.PriorityQueue()
         self.expired_pkts = []
+        self.lost_pkts = []
+        self.dropped_pkts = []
         self.max_pkt_no = 0
 
         self.drp_rate = 0.01
