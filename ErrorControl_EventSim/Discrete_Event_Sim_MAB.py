@@ -45,8 +45,7 @@ class MAB_Sim(Errctl_Sim):
         self.dropkts = 0
 
     def __snd_pkts(self):
-        while self.snd_wnd:
-
+        while self.snd_wnd > 0:
             # check if the buffer still has pkts
             seg_buffer = self.max_pkt_no - self.S_next
 
@@ -97,10 +96,11 @@ class MAB_Sim(Errctl_Sim):
             # if the action is FEC
             if action_id == 1:
                 self.FECpkts += 1
-                if self.FECpkts % self.FECnum == 0:
+                self.snd_wnd = self.snd_wnd - 1
+                if self.FECpkts % self.FECnum == 0 and self.FECpkts > 0:
                     # if we have sent 4 fec pkts, we need to send 1 additional
                     # redundant pkts, so the snd_wnd - 2
-                    self.snd_wnd = self.snd_wnd - 1 - self.redun_pkt_no
+                    self.snd_wnd = self.snd_wnd - self.redun_pkt_no
 
                 if lost:
                     self.lost_pkt_no += 1
@@ -115,11 +115,12 @@ class MAB_Sim(Errctl_Sim):
 
         # for every 4 FEC pkts sent, we check whether the aditional redundant pkt lost or not
         # if not, we check if the succssfully delivered pkts can recover the lost pkts
-        if self.FECpkts % self.FECnum == 0 and self.S_next > 0:
+        if self.FECpkts % self.FECnum == 0 and self.FECpkts > 0:
             # Check whether the redundant pkt lost or not
             redun_pkt_lost_no = np.random.binomial(
                 self.redun_pkt_no, self.drp_rate)
-            self.FECpkts += self.redun_pkt_no
+            self.snd_wnd += self.redun_pkt_no
+            self.FECpkts = 0
 
             # if the delivered redun pkts can recover the lost pkts
             if self.lost_pkt_no + redun_pkt_lost_no <= self.redun_pkt_no:
@@ -142,8 +143,6 @@ class MAB_Sim(Errctl_Sim):
             self.lost_pkt = queue.Queue()
 
     def __event_lost(self, evnt):
-        self.t = evnt.time
-
         pkt_no = evnt.pkt_no
         context_action_pair = self.pktcontext[pkt_no]
 
@@ -200,7 +199,6 @@ class MAB_Sim(Errctl_Sim):
         context_id = context_action_pair[0]
         action_id = context_action_pair[1]
 
-        self.t = evnt.time
         self.rtt = self.t - evnt.snd_time
         self.rttvar = (1-self.beta) * self.rttvar + \
             self.beta * abs(self.srtt-self.rtt)
@@ -221,7 +219,6 @@ class MAB_Sim(Errctl_Sim):
 
     def __event_pktarrival(self, evnt):
         # if packts arrive
-        self.t = evnt.time
         # Get the current maximum packet number
         self.max_pkt_no = self.accumu_packets[evnt.frm_id]
         # Schedule next arrival event
@@ -242,6 +239,7 @@ class MAB_Sim(Errctl_Sim):
             # Get imminent event
             try:
                 evnt = self.event_list.get_nowait()
+                self.t = evnt.time
             except queue.Empty:
                 if not self.lost_pkt.empty():
                     for i in range(self.lost_pkt_no):

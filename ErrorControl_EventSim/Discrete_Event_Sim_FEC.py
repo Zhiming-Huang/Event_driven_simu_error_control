@@ -148,6 +148,7 @@ class Fec_Sim(Errctl_Sim):
             # Get imminent event
             try:
                 evnt = self.event_list.get_nowait()
+                self.t = evnt.time
             except queue.Empty:
                 if not self.lost_pkt.empty():
                     for i in range(self.lost_pkt_no):
