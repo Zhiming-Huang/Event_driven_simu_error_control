@@ -29,16 +29,21 @@ if __name__ == "__main__":
     Arq_R_packets2 = np.array(Arq_Simulator.R_packets2)
     Arq_pkts_per_frm = np.array(Arq_Simulator.pkts_per_frm)
     Arq_expired_pkts = np.array(Arq_Simulator.expired_pkts)
+    Arq_finalt = Arq_Simulator.finalRcv_t
 
     FEC_R_packets = np.array(FEC_Simulator.R_packets)
     FEC_R_packets2 = np.array(FEC_Simulator.R_packets2)
     FEC_pkts_per_frm = np.array(FEC_Simulator.pkts_per_frm)
     FEC_expired_pkts = np.array(FEC_Simulator.expired_pkts)
+    FEC_lost_pkts = np.array(FEC_Simulator.expired_pkts)
+    FEC_finalt = FEC_Simulator.finalRcv_t
 
     MAB_R_packets = np.array(MAB_Simulator.R_packets)
     MAB_R_packets2 = np.array(MAB_Simulator.R_packets2)
     MAB_pkts_per_frm = np.array(MAB_Simulator.pkts_per_frm)
     MAB_expired_pkts = np.array(MAB_Simulator.expired_pkts)
+    MAB_lost_pkts = np.array(MAB_Simulator.expired_pkts)
+    MAB_finalt = MAB_Simulator.finalRcv_t
 
     Arq_completeness = Arq_R_packets / Arq_pkts_per_frm
     FEC_completeness = FEC_R_packets / FEC_pkts_per_frm
