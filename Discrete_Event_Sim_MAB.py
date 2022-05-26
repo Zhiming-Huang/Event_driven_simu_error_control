@@ -38,6 +38,9 @@ class MAB_Sim(Errctl_Sim):
         # initialize how many FEC packets have been sent
         self.FECpkts = 0
 
+        # initialize the number of FEC packets for each redundant pkt
+        self.FECnum = 4
+
         # initialize how many packets are dropped proactively
         self.dropkts = 0
 
@@ -94,10 +97,10 @@ class MAB_Sim(Errctl_Sim):
             # if the action is FEC
             if action_id == 1:
                 self.FECpkts += 1
-                if self.FECpkts % (self.snd_wnd - self.redun_pkt_no) == 0:
+                if self.FECpkts % self.FECnum == 0:
                     # if we have sent 4 fec pkts, we need to send 1 additional
                     # redundant pkts, so the snd_wnd - 2
-                    self.snd_wnd -= 2
+                    self.snd_wnd = self.snd_wnd - 1 - self.redun_pkt_no
 
                 if lost:
                     self.lost_pkt_no += 1
@@ -112,10 +115,11 @@ class MAB_Sim(Errctl_Sim):
 
         # for every 4 FEC pkts sent, we check whether the aditional redundant pkt lost or not
         # if not, we check if the succssfully delivered pkts can recover the lost pkts
-        if self.FECpkts % (self.snd_wnd - self.redun_pkt_no) == 0 and self.S_next > 0:
+        if self.FECpkts % self.FECnum == 0 and self.S_next > 0:
             # Check whether the redundant pkt lost or not
             redun_pkt_lost_no = np.random.binomial(
                 self.redun_pkt_no, self.drp_rate)
+            self.FECpkts += self.redun_pkt_no
 
             # if the delivered redun pkts can recover the lost pkts
             if self.lost_pkt_no + redun_pkt_lost_no <= self.redun_pkt_no:
@@ -139,7 +143,7 @@ class MAB_Sim(Errctl_Sim):
 
     def __event_lost(self, evnt):
         self.t = evnt.time
-        # if packet lost and timeout, move snd window
+
         pkt_no = evnt.pkt_no
         context_action_pair = self.pktcontext[pkt_no]
 
@@ -153,8 +157,8 @@ class MAB_Sim(Errctl_Sim):
             self.drp_rate = 0.25 * self.drp_rate + \
                 np.random.uniform(0, 0.05) * 0.75
             if lost:
-                # if packet is lost, an timeout event is generated
-                evnt.set_time(self.t + 2*self.rto)
+                # if packet is lost, another timeout event is generated
+                evnt.set_time(self.t + self.rto)
                 evnt.set_sndtime(self.t)
                 # set the event type to timeout event
                 evnt.set_type(1)
@@ -170,13 +174,31 @@ class MAB_Sim(Errctl_Sim):
                 # add event to the event list
                 self.event_list.put_nowait(evnt)
 
-        if pkt_no >= self.S_base:
-            self.S_base = pkt_no
+        # if the action is FEC, we just ignore the lost pkts and move sndwnd
+        else:
+            pkt_imp = evnt.pkt_imp
+
+            context_id = context_action_pair[0]
+            # update MAB
+
+            reward = 0 if pkt_imp == 1 else 0.1
+            self.MABctler.exp3_udate(context_id, action_id, reward)
+
+            # remove the pair from the buffer
+            self.pktcontext.pop(pkt_no)
+
+            # move the snding window
+            self.snd_wnd += 1
 
         self.__snd_pkts()
 
     def __event_ack(self, evnt):
         # receive an ack
+        pkt_no = evnt.pkt_no
+        context_action_pair = self.pktcontext[pkt_no]
+        context_id = context_action_pair[0]
+        action_id = context_action_pair[1]
+
         self.t = evnt.time
         self.rtt = self.t - evnt.snd_time
         self.rttvar = (1-self.beta) * self.rttvar + \
@@ -184,28 +206,14 @@ class MAB_Sim(Errctl_Sim):
         self.srtt = (1-self.alpha) * self.srtt + \
             self.alpha * self.rtt
         self.rto = self.srtt + max(1, 4*self.rttvar)
-        pkt_no = evnt.pkt_no
-        self.ACKed_pkts.put_nowait(pkt_no)
 
-        if pkt_no >= self.S_base:
-            self.S_base = pkt_no
+        self.snd_wnd += 1
 
-        # Send packets
-        self.__snd_pkts()
+        # update MAB
+        self.MABctler.exp3_udate(context_id, action_id, 1)
 
-    def __event_pktarrival(self, evnt):
-        # if packts arrive
-        self.t = evnt.time
-        # Get the current maximum packet number
-        self.max_pkt_no = self.accumu_packets[evnt.frm_id]
-        # Schedule next arrival event
-        self.ind += 1
-        if self.ind < self.num_frms:
-            try:
-                self.event_list.put_nowait(
-                    self.arrival_events[self.ind])
-            except queue.Full:
-                print("Queue is full")
+        # remove the pair from the buffer
+        self.pktcontext.pop(pkt_no)
 
         # Send packets
         self.__snd_pkts()
@@ -229,7 +237,7 @@ class MAB_Sim(Errctl_Sim):
                     break
             else:
                 if evnt.type == 0:
-                    self. __event_pktarrival(evnt)
+                    self._Errctl_Sim__event_pktarrival(evnt)
 
                 elif evnt.type == 1:
                     self.__event_lost(evnt)

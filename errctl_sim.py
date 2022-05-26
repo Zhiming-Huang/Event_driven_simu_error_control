@@ -152,7 +152,7 @@ class Errctl_Sim:
             np.random.uniform(0, 0.05) * 0.75
         if lost:
             # if packet is lost, an timeout event is generated
-            evnt.set_time(self.t + 2*self.rto)
+            evnt.set_time(self.t + self.rto)
             evnt.set_sndtime(self.t)
             # set the event type to timeout event
             evnt.set_type(1)
