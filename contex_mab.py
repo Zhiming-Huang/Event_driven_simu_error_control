@@ -46,6 +46,7 @@ class MAB_Control():
         self.packet_imp = packet_imp
         self.seg_buffer = seg_buffer
         self.snd_wnd = snd_wnd
+        return self.type
 
     def _detcontype(self):
         # type 1: delay<1.5 rtt, seg_buffer = 0, packet_importance = 0
@@ -57,24 +58,24 @@ class MAB_Control():
         # type 7: delay > 1.5 rtt, seg_buffer > 0, packet_importance = 0
         # type 8: delay > 1.5 rtt, seg_buffer > 0, packet_importance = 1
         if self.delayReq <= 1.5*self.rtt:
-            if self.packet_imp != 1 and self.seg_buffer == 0:
+            if self.packet_imp != 1 and self.seg_buffer <= self.snd_wnd:
                 self.type = 1
-            if self.packet_imp == 1 and self.seg_buffer == 0:
+            if self.packet_imp == 1 and self.seg_buffer <= self.snd_wnd:
                 self.type = 2
-            if self.packet_imp != 1 and self.seg_buffer > 0:
+            if self.packet_imp != 1 and self.seg_buffer > self.snd_wnd:
                 self.type = 5
-            if self.packet_imp == 1 and self.seg_buffer > 0:
+            if self.packet_imp == 1 and self.seg_buffer > self.snd_wnd:
                 self.type = 6
         if self.delayReq > 1.5*self.rtt:
-            if self.packet_imp != 1 and self.seg_buffer <= 0:
+            if self.packet_imp != 1 and self.seg_buffer <= self.snd_wnd:
                 self.type = 3
-            if self.packet_imp == 1 and self.seg_buffer <= 0:
+            if self.packet_imp == 1 and self.seg_buffer <= self.snd_wnd:
                 self.type = 4
-            if self.packet_imp != 1 and self.seg_buffer > 0:
+            if self.packet_imp != 1 and self.seg_buffer > self.snd_wnd:
                 self.type = 7
             if self.snd_wnd <= 1:
                 self.type = 9
-            if self.packet_imp == 1 and self.seg_buffer > 0:
+            if self.packet_imp == 1 and self.seg_buffer > self.snd_wnd:
                 self.type = 8
 
     def exp3_action(self):
