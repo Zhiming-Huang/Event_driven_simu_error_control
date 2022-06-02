@@ -54,7 +54,7 @@ class Fec_Sim(Errctl_Sim):
             # determine pkt importance:
             frm_id = np.where(self.accumu_packets >= self.S_next+1)[0][0]
             pkt_imp = self.frametype(frm_id+1)
-
+            pkt_spawn_time = self.frame_spawn_time[frm_id]
             # determine whether the packet is lost or not
             lost = np.random.binomial(1, self.drp_rate)
             self.drp_rate = 0.25 * self.drp_rate + \
@@ -63,11 +63,11 @@ class Fec_Sim(Errctl_Sim):
             if lost:
                 self.lost_pkt_no += 1
                 self.lost_pkt.put_nowait(
-                    event(self.t, self.t, 2, self.S_next, pkt_imp, self.t + self.delay_req, frm_id))
+                    event(self.t, self.t, 2, self.S_next, pkt_imp, pkt_spawn_time + self.delay_req, frm_id))
             else:
                 # determine the arrival time
                 self.event_list.put_nowait(
-                    event(self.t + one_trip, self.t, 2, self.S_next, pkt_imp, self.t + self.delay_req, frm_id))
+                    event(self.t + one_trip, self.t, 2, self.S_next, pkt_imp, pkt_spawn_time + self.delay_req, frm_id))
             #
             self.S_next += 1
 
@@ -110,13 +110,14 @@ class Fec_Sim(Errctl_Sim):
 
     def __event_ack(self, evnt):
         # receive an ack
-        self.t = evnt.time
-        self.rtt = self.t - evnt.snd_time
-        self.rttvar = (1-self.beta) * self.rttvar + \
-            self.beta * abs(self.srtt-self.rtt)
-        self.srtt = (1-self.alpha) * self.srtt + \
-            self.alpha * self.rtt
-        self.rto = self.srtt + max(1, 4*self.rttvar)
+        if not evnt.ifretran:
+            self.t = evnt.time
+            self.rtt = self.t - evnt.snd_time
+            self.rttvar = (1-self.beta) * self.rttvar + \
+                self.beta * abs(self.srtt-self.rtt)
+            self.srtt = (1-self.alpha) * self.srtt + \
+                self.alpha * self.rtt
+            self.rto = self.srtt + max(1, 4*self.rttvar)
         pkt_no = evnt.pkt_no
 
         if pkt_no >= self.S_base:
@@ -180,3 +181,4 @@ if __name__ == "__main__":
     R_packets = Fec_Simulator.R_packets
     R_packets2 = Fec_Simulator.R_packets2
     expired_pkts = Fec_Simulator.expired_pkts
+    pktdelay = Fec_Simulator.pktdelay

@@ -43,3 +43,5 @@ if __name__ == "__main__":
 
     R_packets = Arq_Simulator.R_packets
     R_packets2 = Arq_Simulator.R_packets2
+    expired_pkts = Arq_Simulator.expired_pkts
+    pktdelay = Arq_Simulator.pktdelay

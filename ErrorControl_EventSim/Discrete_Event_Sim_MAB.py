@@ -57,10 +57,10 @@ class MAB_Sim(Errctl_Sim):
             # determine pkt importance:
             frm_id = np.where(self.accumu_packets >= self.S_next+1)[0][0]
             pkt_imp = self.frametype(frm_id+1)
-
+            pkt_spawn_time = self.frame_spawn_time[frm_id]
             # input the context
             context_id = self.MABctler.input_context(
-                self.delay_req, pkt_imp, seg_buffer, self.snd_wnd)
+                self.t - pkt_spawn_time + self.delay_req, pkt_imp, seg_buffer, self.snd_wnd)
 
             # get actions: 0 for ARQ, 1 for FEC, and 2 for drop
             action_id = self.MABctler.exp3_action()
@@ -87,11 +87,11 @@ class MAB_Sim(Errctl_Sim):
                 if lost:
                     # schedule the timeout events
                     self.event_list.put_nowait(
-                        event(self.t+self.rto, self.t, 1, self.S_next, pkt_imp, self.t + self.delay_req, frm_id))
+                        event(self.t+self.rto, self.t, 1, self.S_next, pkt_imp, pkt_spawn_time + self.delay_req, frm_id))
 
                 else:
                     self.event_list.put_nowait(
-                        event(self.t + one_trip, self.t, 2, self.S_next, pkt_imp, self.t + self.delay_req, frm_id))
+                        event(self.t + one_trip, self.t, 2, self.S_next, pkt_imp, pkt_spawn_time + self.delay_req, frm_id))
 
             # if the action is FEC
             if action_id == 1:
@@ -105,11 +105,11 @@ class MAB_Sim(Errctl_Sim):
                 if lost:
                     self.lost_pkt_no += 1
                     self.lost_pkt.put_nowait(
-                        event(self.t, self.t, 2, self.S_next, pkt_imp, self.t + self.delay_req, frm_id))
+                        event(self.t, self.t, 2, self.S_next, pkt_imp, pkt_spawn_time + self.delay_req, frm_id))
                 else:
                     # determine the arrival time
                     self.event_list.put_nowait(
-                        event(self.t + one_trip, self.t, 2, self.S_next, pkt_imp, self.t + self.delay_req, frm_id))
+                        event(self.t + one_trip, self.t, 2, self.S_next, pkt_imp, pkt_spawn_time + self.delay_req, frm_id))
 
             self.S_next += 1
 
@@ -199,12 +199,13 @@ class MAB_Sim(Errctl_Sim):
         context_id = context_action_pair[0]
         action_id = context_action_pair[1]
 
-        self.rtt = self.t - evnt.snd_time
-        self.rttvar = (1-self.beta) * self.rttvar + \
-            self.beta * abs(self.srtt-self.rtt)
-        self.srtt = (1-self.alpha) * self.srtt + \
-            self.alpha * self.rtt
-        self.rto = self.srtt + max(1, 4*self.rttvar)
+        if not evnt.ifretran:
+            self.rtt = self.t - evnt.snd_time
+            self.rttvar = (1-self.beta) * self.rttvar + \
+                self.beta * abs(self.srtt-self.rtt)
+            self.srtt = (1-self.alpha) * self.srtt + \
+                self.alpha * self.rtt
+            self.rto = self.srtt + max(1, 4*self.rttvar)
 
         self.snd_wnd += 1
 
@@ -271,3 +272,4 @@ if __name__ == "__main__":
     R_packets = MAB_Simulator.R_packets
     R_packets2 = MAB_Simulator.R_packets2
     expired_pkts = MAB_Simulator.expired_pkts
+    pktdelay = MAB_Simulator.pktdelay

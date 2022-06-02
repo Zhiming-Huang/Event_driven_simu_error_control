@@ -30,6 +30,7 @@ if __name__ == "__main__":
     Arq_pkts_per_frm = np.array(Arq_Simulator.pkts_per_frm)
     Arq_expired_pkts = np.array(Arq_Simulator.expired_pkts)
     Arq_finalt = Arq_Simulator.finalRcv_t
+    Arq_pktdelay = np.array(Arq_Simulator.pktdelay)
 
     FEC_R_packets = np.array(FEC_Simulator.R_packets)
     FEC_R_packets2 = np.array(FEC_Simulator.R_packets2)
@@ -37,6 +38,7 @@ if __name__ == "__main__":
     FEC_expired_pkts = np.array(FEC_Simulator.expired_pkts)
     FEC_lost_pkts = np.array(FEC_Simulator.lost_pkts)
     FEC_finalt = FEC_Simulator.finalRcv_t
+    FEC_pktdelay = np.array(FEC_Simulator.pktdelay)
 
     MAB_R_packets = np.array(MAB_Simulator.R_packets)
     MAB_R_packets2 = np.array(MAB_Simulator.R_packets2)
@@ -44,6 +46,7 @@ if __name__ == "__main__":
     MAB_expired_pkts = np.array(MAB_Simulator.expired_pkts)
     MAB_lost_pkts = np.array(MAB_Simulator.lost_pkts)
     MAB_finalt = MAB_Simulator.finalRcv_t
+    MAB_pktdelay = np.array(MAB_Simulator.pktdelay)
 
     Arq_completeness = Arq_R_packets / Arq_pkts_per_frm
     FEC_completeness = FEC_R_packets / FEC_pkts_per_frm
@@ -51,25 +54,25 @@ if __name__ == "__main__":
     expired_pkts_no = [len(Arq_expired_pkts), len(
         FEC_expired_pkts), len(MAB_expired_pkts)]
 
-    plt.hist(Arq_completeness)
-    plt.xlabel("Frame Completeness")
-    plt.ylabel("Frame Number")
-    plt.ylim([0, 8000])
+    # plt.hist(Arq_completeness)
+    # plt.xlabel("Frame Completeness")
+    # plt.ylabel("Frame Number")
+    # plt.ylim([0, 8000])
 
-    plt.hist(FEC_completeness)
-    plt.xlabel("Frame Completeness")
-    plt.ylabel("Frame Number")
-    plt.ylim([0, 8000])
+    # plt.hist(FEC_completeness)
+    # plt.xlabel("Frame Completeness")
+    # plt.ylabel("Frame Number")
+    # plt.ylim([0, 8000])
 
-    plt.hist(MAB_completeness)
-    plt.xlabel("Frame Completeness")
-    plt.ylabel("Frame Number")
-    plt.ylim([0, 8000])
+    # plt.hist(MAB_completeness)
+    # plt.xlabel("Frame Completeness")
+    # plt.ylabel("Frame Number")
+    # plt.ylim([0, 8000])
 
-    plt.bar(['ARQ', 'FEC', 'MAB'], expired_pkts_no)
+    # plt.bar(['ARQ', 'FEC', 'MAB'], expired_pkts_no)
 
-    plt.bar(['ARQ', 'FEC', 'MAB'], [
-            0, len(FEC_lost_pkts), len(MAB_lost_pkts)])
+    # plt.bar(['ARQ', 'FEC', 'MAB'], [
+    #         0, len(FEC_lost_pkts), len(MAB_lost_pkts)])
 
-    plt.bar(['ARQ', 'FEC', 'MAB'], [ARQ_Simulator.t,
-            FEC_Simulator.t, MAB_Simulator.t])
+    # plt.bar(['ARQ', 'FEC', 'MAB'], [Arq_Simulator.t,
+    #         FEC_Simulator.t, MAB_Simulator.t])
