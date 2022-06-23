@@ -42,12 +42,12 @@ class Errctl_Sim:
     def __init__(self, tracefile="starwars.frames.old"):
         # read the tracefile
         with open(tracefile, 'r+') as infile:
-            self.traces = infile.read().splitlines()[0:5000]
+            self.traces = infile.read().splitlines()[0:1000]
             self.traces = np.array(list(map(int, self.traces)))
 
-        self.pkt_size = 1000*8  # 1k bytes per packet
+        self.pkt_size = 1000*8  # 1000 bytes per packet
         self.pkts_per_frm = np.array(
-            [int(item/(self.pkt_size)) for item in self.traces])
+            [int(np.ceil(item/(self.pkt_size)))+1 for item in self.traces])
         self.accumu_packets = np.cumsum(self.pkts_per_frm)
         # Determine the generation time for each frame
         self.num_frms = len(self.traces)
@@ -70,6 +70,9 @@ class Errctl_Sim:
 
         self.R_packets = np.zeros(self.num_frms)
         self.R_packets2 = np.zeros(self.accumu_packets[-1])
+        self.R_packets3 = np.zeros(self.accumu_packets[-1])
+        self.pkt_drprate = np.zeros(self.accumu_packets[-1])
+
         self.ACKed_pkts = queue.PriorityQueue()
         self.pktdelay = np.zeros(self.accumu_packets[-1])
         self.expired_pkts = []
@@ -80,8 +83,8 @@ class Errctl_Sim:
         self.drp_rate = 0.01
         self.max_pkt_no = 0
         self.delay_req = 180
-        self.one_trip_min = 10
-        self.one_trip_max = 20
+        self.one_trip_min = 20
+        self.one_trip_max = 40
 
         # retran RCF6298 https://www.saminiir.com/lets-code-tcp-ip-stack-5-tcp-retransmission/
         self.srtt = 2*self.one_trip_max  # smoothed round-trip time
@@ -119,8 +122,11 @@ class Errctl_Sim:
             pkt_spawn_time = self.frame_spawn_time[frm_id]
             pkt_imp = self.frametype(frm_id+1)
 
+            self.pkt_drprate[self.S_next] = self.drp_rate
+
             # determine whether the packet is lost or not
             lost = np.random.binomial(1, self.drp_rate)
+
             self.drp_rate = 0.25 * self.drp_rate + \
                 np.random.uniform(0, 0.05) * 0.75
 

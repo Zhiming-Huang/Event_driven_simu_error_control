@@ -9,26 +9,11 @@ Created on Fri Apr  1 15:25:37 2022
 import queue
 import numpy as np
 import logging
-from ErrorControl_EventSim.errctl_sim import Errctl_Sim, event
+from errctl_sim import Errctl_Sim, event
 #from SplayTree import *
 
-# set logger
-# logger = logging.getLogger("arq-simulator")
-# logger.setLevel(logging.DEBUG)
+
 logging.basicConfig(level=logging.DEBUG)
-# create console handler and set level to debug
-# ch = logging.StreamHandler()
-# ch.setLevel(logging.DEBUG)
-
-# create formatter
-# formatter = logging.Formatter(
-#     '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-# add formatter to ch
-# ch.setFormatter(formatter)
-
-# add ch to logger
-# logger.addHandler(ch)
 
 
 class Fec_Sim(Errctl_Sim):
@@ -56,6 +41,8 @@ class Fec_Sim(Errctl_Sim):
             pkt_imp = self.frametype(frm_id+1)
             pkt_spawn_time = self.frame_spawn_time[frm_id]
             # determine whether the packet is lost or not
+
+            self.pkt_drprate[self.S_next] = self.drp_rate
             lost = np.random.binomial(1, self.drp_rate)
             self.drp_rate = 0.25 * self.drp_rate + \
                 np.random.uniform(0, 0.05) * 0.75
