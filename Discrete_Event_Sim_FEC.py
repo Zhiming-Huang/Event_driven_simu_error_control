@@ -23,7 +23,7 @@ class Fec_Sim(Errctl_Sim):
         super().__init__(tracefile)
 
         # set the number of redundant pkts for each batch of packet
-        self.redun_pkt_no = 1
+        self.redun_pkt_no = 2
 
         self.lost_pkt_no = 0
         self.lost_pkt = queue.Queue()
@@ -58,7 +58,7 @@ class Fec_Sim(Errctl_Sim):
             #
             self.S_next += 1
 
-        # for every 4 pkts sent, we check whether the aditional redundant pkt lost or not
+        # for every (self.snd_wnd - self.redun_pkt_no) pkts sent, we check whether the aditional redundant pkt lost or not
         # if not, we check if the succssfully delivered pkts can recover the lost pkts
         if self.S_next % (self.snd_wnd - self.redun_pkt_no) == 0 and self.S_next > 0:
             # Check whether the redundant pkt lost or not

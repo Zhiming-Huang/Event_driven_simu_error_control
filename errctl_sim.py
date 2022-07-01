@@ -64,7 +64,7 @@ class Errctl_Sim:
 
     def __set_network(self):
         # sending window control
-        self.snd_wnd = 5
+        self.snd_wnd = 10
         self.S_base = 0
         self.S_next = 0
 
@@ -81,10 +81,11 @@ class Errctl_Sim:
         self.max_pkt_no = 0
 
         self.drp_rate = 0.01
+        self.max_drp_rate = 0.05
         self.max_pkt_no = 0
         self.delay_req = 180
-        self.one_trip_min = 20
-        self.one_trip_max = 40
+        self.one_trip_min = 40
+        self.one_trip_max = 50
 
         # retran RCF6298 https://www.saminiir.com/lets-code-tcp-ip-stack-5-tcp-retransmission/
         self.srtt = 2*self.one_trip_max  # smoothed round-trip time
