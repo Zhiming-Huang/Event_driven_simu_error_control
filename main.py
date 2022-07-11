@@ -120,6 +120,7 @@ def one_instance():
     # plt.bar(['ARQ', 'FEC', 'MAB'], [
     #         0, len(FEC_lost_pkts), len(MAB_lost_pkts)])
 
+
     # plt.bar(['ARQ', 'FEC', 'MAB'], [Arq_Simulator.t, FEC_Simulator.t, MAB_Simulator.t])
     # plt.ylim([208000, 212000])
 if __name__ == "__main__":
@@ -143,9 +144,16 @@ if __name__ == "__main__":
     E_key_pkt_no = E_key_pkt_no / 100
     P_Ave_Delay = P_Ave_Delay / 100
 
-    #plt.bar(['ARQ', 'FEC', 'MAB'], F_complenetess)
+    # def plot_completeness(F_complenetess, F_key_completeness):
+    #     fig, ax1
+    # plt.bar(['ARQ', 'FEC', 'MAB'], F_complenetess/1000)
+    # plt.ylim([0.95,1])
+    # plt.bar(['ARQ', 'FEC', 'MAB'], F_key_completeness/84)
+    # plt.ylim([0.95,1])
     #plt.bar(['ARQ', 'FEC', 'MAB'], E_key_pkt_no)
-    #plt.bar(['ARQ', 'FEC', 'MAB'], P_Ave_Delay)
+    # plt.bar(['ARQ', 'FEC', 'MAB'], P_Ave_Delay)
+    # plt.ylim([25, 35])
+
 
 # plt.bar(['ARQ', 'FEC', 'MAB'], [np.mean(Arq_pktdelay),
 #         np.mean(FEC_pktdelay), np.mean(MAB_pktdelay)])
