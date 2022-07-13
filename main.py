@@ -153,11 +153,20 @@ if __name__ == "__main__":
     #plt.bar(['ARQ', 'FEC', 'MAB'], E_key_pkt_no)
     # plt.bar(['ARQ', 'FEC', 'MAB'], P_Ave_Delay)
     # plt.ylim([25, 35])
-    def draw_bars(bars, file_name):
+    def draw_bars(bars, file_name, args=None):
         fig, ax = plt.subplots()
         barhandler = ax.bar(['ARQ', 'FEC', 'MAB'], bars)
         ax.bar_label(barhandler)
+        if args != None:
+            ax.ylabel("Packet_averaged_delay (ms)")
         plt.savefig(file_name, format='eps')
+        
+    draw_bars(F_complenetess/1000, "Sce1_Frame_completeness.eps")
+    draw_bars(F_key_completeness/84, "Sce1_Key_Frame_completeness.eps")
+    draw_bars(E_key_pkt_no, "Sce1_Key_packet_expired.eps")
+    draw_bars(P_Ave_Delay, "Sce1_packet_delay.eps")
+    
+    
 
 # plt.bar(['ARQ', 'FEC', 'MAB'], [np.mean(Arq_pktdelay),
 #         np.mean(FEC_pktdelay), np.mean(MAB_pktdelay)])

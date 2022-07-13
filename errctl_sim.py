@@ -42,7 +42,7 @@ class Errctl_Sim:
     def __init__(self, tracefile="starwars.frames.old"):
         # read the tracefile
         with open(tracefile, 'r+') as infile:
-            self.traces = infile.read().splitlines()[0:1000]
+            self.traces = infile.read().splitlines()[0:5000]
             self.traces = np.array(list(map(int, self.traces)))
 
         self.pkt_size = 1000*8  # 1000 bytes per packet
