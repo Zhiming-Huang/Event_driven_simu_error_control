@@ -11,7 +11,16 @@ import logging
 
 
 class event:
-    def __init__(self,  evt_time, snd_time, evt_type, pkt_no=None, pkt_imp=None, pkt_delay_req=None, frm_id=None):
+    def __init__(
+        self,
+        evt_time,
+        snd_time,
+        evt_type,
+        pkt_no=None,
+        pkt_imp=None,
+        pkt_delay_req=None,
+        frm_id=None,
+    ):
         # evt_type 0 for pkt arrival, 1 for timeout, 2 for delivered, 3 for ACK
         self.time = evt_time
         self.snd_time = snd_time
@@ -41,13 +50,19 @@ class event:
 class Errctl_Sim:
     def __init__(self, tracefile="starwars.frames.old"):
         # read the tracefile
+<<<<<<< Updated upstream
         with open(tracefile, 'r+') as infile:
             self.traces = infile.read().splitlines()[0:5000]
+=======
+        with open(tracefile, "r+") as infile:
+            self.traces = infile.read().splitlines()[0:1000]
+>>>>>>> Stashed changes
             self.traces = np.array(list(map(int, self.traces)))
 
-        self.pkt_size = 1000*8  # 1000 bytes per packet
+        self.pkt_size = 1000 * 8  # 1000 bytes per packet
         self.pkts_per_frm = np.array(
-            [int(np.ceil(item/(self.pkt_size)))+1 for item in self.traces])
+            [int(np.ceil(item / (self.pkt_size))) + 1 for item in self.traces]
+        )
         self.accumu_packets = np.cumsum(self.pkts_per_frm)
         # Determine the generation time for each frame
         self.num_frms = len(self.traces)
@@ -57,14 +72,13 @@ class Errctl_Sim:
 
         self.arrival_events = []
         for i in range(self.num_frms):
-            self.arrival_events.append(
-                event(self.frame_spawn_time[i], 0, 0, frm_id=i))
+            self.arrival_events.append(event(self.frame_spawn_time[i], 0, 0, frm_id=i))
 
         self.__set_network()
 
     def __set_network(self):
         # sending window control
-        self.snd_wnd = 10
+        self.snd_wnd = 20
         self.S_base = 0
         self.S_next = 0
 
@@ -88,7 +102,7 @@ class Errctl_Sim:
         self.one_trip_max = 40
 
         # retran RCF6298 https://www.saminiir.com/lets-code-tcp-ip-stack-5-tcp-retransmission/
-        self.srtt = 2*self.one_trip_max  # smoothed round-trip time
+        self.srtt = 2 * self.one_trip_max  # smoothed round-trip time
         self.rttvar = self.one_trip_max  # round-trip time variation
         self.rto = self.one_trip_max  # retransmission timeout
         self.alpha = 0.125
@@ -114,32 +128,47 @@ class Errctl_Sim:
         while self.S_next < self.S_base + self.snd_wnd:
             if self.S_next >= self.max_pkt_no:
                 break
-            one_trip = np.random.uniform(
-                self.one_trip_min, self.one_trip_max)
+            one_trip = np.random.uniform(self.one_trip_min, self.one_trip_max)
 
             # determine pkt importance:
-            frm_id = np.where(
-                self.accumu_packets >= self.S_next+1)[0][0]
+            frm_id = np.where(self.accumu_packets >= self.S_next + 1)[0][0]
             pkt_spawn_time = self.frame_spawn_time[frm_id]
-            pkt_imp = self.frametype(frm_id+1)
+            pkt_imp = self.frametype(frm_id + 1)
 
             self.pkt_drprate[self.S_next] = self.drp_rate
 
             # determine whether the packet is lost or not
             lost = np.random.binomial(1, self.drp_rate)
 
-            self.drp_rate = 0.25 * self.drp_rate + \
-                np.random.uniform(0, 0.05) * 0.75
+            self.drp_rate = 0.25 * self.drp_rate + np.random.uniform(0, 0.05) * 0.75
 
             if lost:
                 # if packet is lost, an timeout event is generated
                 self.event_list.put_nowait(
-                    event(self.t + self.rto, self.t, 1, self.S_next, pkt_imp, pkt_spawn_time + self.delay_req, frm_id))
+                    event(
+                        self.t + self.rto,
+                        self.t,
+                        1,
+                        self.S_next,
+                        pkt_imp,
+                        pkt_spawn_time + self.delay_req,
+                        frm_id,
+                    )
+                )
 
             else:
                 # determine the arrival time
                 self.event_list.put_nowait(
-                    event(self.t + one_trip, self.t, 2, self.S_next, pkt_imp, pkt_spawn_time + self.delay_req, frm_id))
+                    event(
+                        self.t + one_trip,
+                        self.t,
+                        2,
+                        self.S_next,
+                        pkt_imp,
+                        pkt_spawn_time + self.delay_req,
+                        frm_id,
+                    )
+                )
             self.S_next += 1
 
     def __event_pktarrival(self, evnt):
@@ -151,8 +180,7 @@ class Errctl_Sim:
         self.ind += 1
         if self.ind < self.num_frms:
             try:
-                self.event_list.put_nowait(
-                    self.arrival_events[self.ind])
+                self.event_list.put_nowait(self.arrival_events[self.ind])
             except queue.Full:
                 print("Queue is full")
 
@@ -163,10 +191,8 @@ class Errctl_Sim:
         # if packet lost and timeout, retransmit packet
         self.t = evnt.time
         lost = np.random.binomial(1, self.drp_rate)
-        one_trip = np.random.uniform(
-            self.one_trip_min, self.one_trip_max)
-        self.drp_rate = 0.25 * self.drp_rate + \
-            np.random.uniform(0, 0.05) * 0.75
+        one_trip = np.random.uniform(self.one_trip_min, self.one_trip_max)
+        self.drp_rate = 0.25 * self.drp_rate + np.random.uniform(0, 0.05) * 0.75
         if lost:
             # if packet is lost, an timeout event is generated
             evnt.set_time(self.t + self.rto)
@@ -191,8 +217,7 @@ class Errctl_Sim:
         self.finalRcv_t = evnt.time
         pkt_no = evnt.pkt_no
         self.pktdelay[pkt_no] = self.t - evnt.snd_time
-        one_trip = np.random.uniform(
-            self.one_trip_min, self.one_trip_max)
+        one_trip = np.random.uniform(self.one_trip_min, self.one_trip_max)
         # send ACK, set the event to ack event
         evnt.set_type(3)
         evnt.set_time(self.t + one_trip)
@@ -211,11 +236,11 @@ class Errctl_Sim:
         if not evnt.ifretran:
             self.t = evnt.time
             self.rtt = self.t - evnt.snd_time
-            self.rttvar = (1-self.beta) * self.rttvar + \
-                self.beta * abs(self.srtt-self.rtt)
-            self.srtt = (1-self.alpha) * self.srtt + \
-                self.alpha * self.rtt
-            self.rto = self.srtt + max(1, 4*self.rttvar)
+            self.rttvar = (1 - self.beta) * self.rttvar + self.beta * abs(
+                self.srtt - self.rtt
+            )
+            self.srtt = (1 - self.alpha) * self.srtt + self.alpha * self.rtt
+            self.rto = self.srtt + max(1, 4 * self.rttvar)
         pkt_no = evnt.pkt_no
         self.ACKed_pkts.put_nowait(pkt_no)
 
@@ -248,7 +273,7 @@ class Errctl_Sim:
                 break
             else:
                 if evnt.type == 0:
-                    self. __event_pktarrival(evnt)
+                    self.__event_pktarrival(evnt)
 
                 elif evnt.type == 1:
                     self.__event_lost(evnt)
