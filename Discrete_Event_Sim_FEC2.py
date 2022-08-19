@@ -26,33 +26,47 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class Fec_Sim(Errctl_Sim):
-    def __init__(self, tracefile="starwars.frames.old"):
+    def __init__(self, tracefile="starwars.frames.old", num_frms = 1000):
 
-        super().__init__(tracefile)
+        super().__init__(tracefile, num_frms)
 
         # set the number of redundant pkts for each batch of packet
-        self.redun_pkt_no = 4
-
+        self.redun_pkt_no = 1
+        self.FECnum = 4
         self.lost_pkt_no = 0
         self.lost_pkt = queue.Queue()
-
+        self.FECpkts = 0
         self.fail_flag = False
 
     def __snd_pkts(self):
-        while self.S_next < self.S_base + self.snd_wnd - self.redun_pkt_no:
-            if self.S_next >= self.max_pkt_no:
+        while self.snd_wnd > 0:
+            # check if the buffer still has pkts
+            seg_buffer = self.max_pkt_no - self.S_next
+
+            if not seg_buffer:
                 break
+
             one_trip = np.random.uniform(self.one_trip_min, self.one_trip_max)
 
             # determine pkt importance:
             frm_id = np.where(self.accumu_packets >= self.S_next + 1)[0][0]
             pkt_imp = self.frametype(frm_id + 1)
             pkt_spawn_time = self.frame_spawn_time[frm_id]
-            # determine whether the packet is lost or not
 
             self.pkt_drprate[self.S_next] = self.drp_rate
+
+            # determine whether the packet is lost or not
             lost = np.random.binomial(1, self.drp_rate)
             self.drp_rate = 0.25 * self.drp_rate + np.random.uniform(0, 0.05) * 0.75
+
+            self.snd_wnd = self.snd_wnd - 1
+
+            self.FECpkts += 1
+            if self.FECpkts % self.FECnum == 0 and self.FECpkts > 0:
+                self.FECpkts += 1
+                # if we have sent 4 fec pkts, we need to send 1 additional
+                #    redundant pkts, so the snd_wnd - redun_pkt_no
+                self.snd_wnd = self.snd_wnd - self.redun_pkt_no
 
             if lost:
                 self.lost_pkt_no += 1
@@ -80,14 +94,17 @@ class Fec_Sim(Errctl_Sim):
                         frm_id,
                     )
                 )
-            #
             self.S_next += 1
+            # if self.S_next == 1074:
+            #     logging.debug("here")
 
-        # for every (self.snd_wnd - self.redun_pkt_no) pkts sent, we check whether the aditional redundant pkt lost or not
+        # for every 4 FEC pkts sent, we check whether the aditional redundant pkt lost or not
         # if not, we check if the succssfully delivered pkts can recover the lost pkts
-        if self.S_next % (self.snd_wnd - self.redun_pkt_no) == 0 and self.S_next > 0:
+        if self.FECpkts >= self.redun_pkt_no + self.FECnum:
             # Check whether the redundant pkt lost or not
             redun_pkt_lost_no = np.random.binomial(self.redun_pkt_no, self.drp_rate)
+            self.snd_wnd += self.redun_pkt_no
+            self.FECpkts -= self.redun_pkt_no + self.FECnum
 
             # if the delivered redun pkts can recover the lost pkts
             if self.lost_pkt_no + redun_pkt_lost_no <= self.redun_pkt_no:
@@ -112,6 +129,7 @@ class Fec_Sim(Errctl_Sim):
         self.t = evnt.time
         # if packet lost and timeout, move snd window
         pkt_no = evnt.pkt_no
+        self.snd_wnd += 1
         self.lost_pkts.append(pkt_no)
         if pkt_no >= self.S_base:
             self.S_base = pkt_no
@@ -129,7 +147,7 @@ class Fec_Sim(Errctl_Sim):
             self.srtt = (1 - self.alpha) * self.srtt + self.alpha * self.rtt
             self.rto = self.srtt + max(1, 4 * self.rttvar)
         pkt_no = evnt.pkt_no
-
+        self.snd_wnd += 1
         if pkt_no >= self.S_base:
             self.S_base = pkt_no
 

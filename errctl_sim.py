@@ -48,15 +48,10 @@ class event:
 
 
 class Errctl_Sim:
-    def __init__(self, tracefile="starwars.frames.old"):
+    def __init__(self, tracefile="starwars.frames.old", num_frms = 1000):
         # read the tracefile
-<<<<<<< Updated upstream
-        with open(tracefile, 'r+') as infile:
-            self.traces = infile.read().splitlines()[0:5000]
-=======
         with open(tracefile, "r+") as infile:
-            self.traces = infile.read().splitlines()[0:1000]
->>>>>>> Stashed changes
+            self.traces = infile.read().splitlines()[0:num_frms]
             self.traces = np.array(list(map(int, self.traces)))
 
         self.pkt_size = 1000 * 8  # 1000 bytes per packet
@@ -78,7 +73,7 @@ class Errctl_Sim:
 
     def __set_network(self):
         # sending window control
-        self.snd_wnd = 20
+        self.snd_wnd = 10
         self.S_base = 0
         self.S_next = 0
 
@@ -98,8 +93,8 @@ class Errctl_Sim:
         self.max_drp_rate = 0.05
         self.max_pkt_no = 0
         self.delay_req = 180
-        self.one_trip_min = 20
-        self.one_trip_max = 40
+        self.one_trip_min = 10
+        self.one_trip_max = 30
 
         # retran RCF6298 https://www.saminiir.com/lets-code-tcp-ip-stack-5-tcp-retransmission/
         self.srtt = 2 * self.one_trip_max  # smoothed round-trip time

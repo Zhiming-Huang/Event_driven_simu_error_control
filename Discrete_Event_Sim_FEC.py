@@ -18,12 +18,12 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class Fec_Sim(Errctl_Sim):
-    def __init__(self, tracefile="starwars.frames.old"):
+    def __init__(self, tracefile="starwars.frames.old", num_frms = 1000):
 
-        super().__init__(tracefile)
+        super().__init__(tracefile, num_frms)
 
         # set the number of redundant pkts for each batch of packet
-        self.redun_pkt_no = 4
+        self.redun_pkt_no = 2
 
         self.lost_pkt_no = 0
         self.lost_pkt = queue.Queue()

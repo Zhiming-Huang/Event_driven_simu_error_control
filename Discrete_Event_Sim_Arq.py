@@ -33,8 +33,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class Arq_Sim(Errctl_Sim):
-    def __init__(self, tracefile="starwars.frames.old"):
-        super().__init__(tracefile)
+    def __init__(self, tracefile="starwars.frames.old", num_frms=1000):
+        super().__init__(tracefile, num_frms)
 
 
 if __name__ == "__main__":
